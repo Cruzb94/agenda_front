@@ -1,58 +1,82 @@
 <template>
     <div>
-        <Header />
-            <div class="container">
-            <button type="button" class="btn btn-primary" v-on:click="openModalNuevo">Añadir Interes</button> <br><br>
-            <h2>Usuarios Online</h2>
+        <div class="container">
+            <button type="button" id="new_contact" class="btn btn-primary" v-on:click="openModalNuevo">Añadir Contacto</button> <br><br>
+            <h2>Contactos</h2>
                 <table class="table table-hover">
                     <thead>
                         <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Email</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col">Correo</th>
+                        <th scope="col">Dirección</th>
                         <th scope="col">Options</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="usuario in usuarios_on" :key="usuario.id">
-                            <th scope="row">{{usuario.id}}</th>
-                            <td>{{usuario.name}}</td>
-                            <td>{{usuario.email}}</td>
+                        <tr v-for="contact in contacts" :key="contact.id">
+                            <th scope="row">{{contact.id}}</th>
+                            <td>{{contact.name}}</td>
+                            <td>{{contact.phone}}</td>
+                            <td>{{contact.email}}</td>
+                            <td>{{contact.address}}</td>
                             <td>
-                                <button type="button" style="color: white;" class="btn btn-info" v-on:click="openModalVer(usuario.id)">Ver Intereses</button>
+                                <button type="button" style="color: white;" class="btn btn-info" v-on:click="openModalEdit(contact.id)">Editar</button>
+                                <button type="button" class="btn btn-danger" style="margin-left: 10px;" v-on:click="deleteContact(contact.id)">Borrar</button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
-                <!-- Modal nuevo interes -->
-                <modal name="nuevo_interes" >
-                    <div class="container-fluid" style="height: 100px;">  
-                        <br><br>
+                <!-- Modal nuevo contacto -->
+                <modal name="nuevo_contacto" style="height: 350px;">
+                    <div class="container-fluid">  
+                        <br>
                         <form>
                             <div class="form-group">
-                                <label for="exampleFormControlSelect1">Nuevo Interes</label>
-                                
-                                <select name="interes" class="form-control" v-on:change="onChange($event)">
-                                    <option>Seleccione</option>
-                                    <option v-for="interes in intereses" :key="interes.id" :value="interes.id">{{interes.name}}</option>
-                                </select>
-                            </div><br>
-                            <button type="button" class="btn btn-primary" v-on:click="saveInterest">Guardar</button>
+                                <label for="name">Nombre:</label>
+                                <input type="text" class="form-control" id="name" placeholder="Nombre" v-model="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Teléfono:</label>
+                                <input type="text" class="form-control" id="email" placeholder="Teléfono" v-model="phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">email:</label>
+                                <input type="text" class="form-control" id="email" placeholder="Email" v-model="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Dirección:</label>
+                                <input type="text" class="form-control" id="address" placeholder="Dirección" v-model="address">
+                            </div>
+                            <br>
+                            <button type="button" class="btn btn-primary" style="margin-bottom: 60px;" v-on:click="saveContact">Guardar</button>
                         </form>
                     </div>    
                 </modal>
-                <!-- Modal ver intereses -->
-                <modal name="ver_interes" >
-                    <div class="container-fluid" style="height: 100px;">  
-                        <br><br>
+                 <!-- Modal editar contacto -->
+                <modal name="edit_contact" style="height: 350px;">
+                    <div class="container-fluid">  
+                        <br>
                         <form>
                             <div class="form-group">
-                                <label for="exampleFormControlSelect1">Intereses</label>
-                                
-                                <ul class="list-group" v-for="interes in intereses_user_saved" :key="interes.id">
-                                    <li class="list-group-item">{{interes.name}}</li>
-                                </ul>
-                            </div><br>
+                                <label for="name">Nombre:</label>
+                                <input type="text" class="form-control" id="name" placeholder="Nombre" v-model="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Teléfono:</label>
+                                <input type="text" class="form-control" id="email" placeholder="Teléfono" v-model="phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">email:</label>
+                                <input type="text" class="form-control" id="email" placeholder="Email" v-model="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Dirección:</label>
+                                <input type="text" class="form-control" id="address" placeholder="Dirección" v-model="address">
+                            </div>
+                            <br>
+                            <button type="button" class="btn btn-primary" style="margin-bottom: 60px;" v-on:click="updateContact">Guardar</button>
                         </form>
                     </div>    
                 </modal>
@@ -61,8 +85,6 @@
     </div>
 </template>
 <script>
-import Header from '@/components/Header.vue';
-import Footer from '@/components/Footer.vue';
 
 import axios from 'axios';
 
@@ -70,80 +92,140 @@ import axios from 'axios';
         name: "Dashboard",
         data(){
             return {
-                usuarios_on: '',
-                intereses: '',
-                interes_selected: '',
-                intereses_user_saved: '',
+                id: '',
+                name: '',
+                email: '',
+                phone: '',
+                address: '',
+                contacts: [],
             }
         },
         components: {
-            Header,
-            Footer,
+
         },
         mounted: function() {
-            const config = {
-                headers: { Authorization: `Bearer ${localStorage.token}` }
-            };
-
-            let url_users = 'http://127.0.0.1:8000/api/auth/users_online';
-
-            axios.get(url_users, config).then(data => {
-                this.usuarios_on = data.data;
-                console.log(data);
-            })
-
-            let url_interests = 'http://127.0.0.1:8000/api/auth/interests';
-
-            axios.get(url_interests, config).then(data => {
-                this.intereses = data.data.interests;
-                console.log('aqui', this.intereses[0].name);
-
-                 
-            })
+         this.getContacts();
         },
         methods: {
-            openModalNuevo: function() {
-                this.$modal.show('nuevo_interes');
+            getContacts() {
+                const config = {
+                headers: { Authorization: `Bearer ${localStorage.token}` }
+            };
+                let url_groups = process.env.VUE_APP_URL+'/api/auth/contacts';
+                axios.get(url_groups, config).then(data => {
+                    this.contacts = data.data.contacts;
+                    console.log('getContacts',this.contacts);  
+                })
             },
-            openModalVer: function(id) {
-                const headers = { 
-                    "Authorization": `Bearer ${localStorage.token}`,
-                };
+            deleteContact: function(id) {
+                let result = window.confirm('¿Desea eliminar este contacto?');
+  
+                if(result) {
+                    const config = {
+                        headers: { Authorization: `Bearer ${localStorage.token}` }
+                    };
 
-                const url_save = 'http://127.0.0.1:8000/api/auth/interests-user';
-                const interest = { user: id };
+                    const url = process.env.VUE_APP_URL+'/api/auth/delete';
 
-                axios.post(url_save, interest, { headers })
-                    .then(data => {
-                       this.intereses_user_saved = data.data; 
-                     });
+                    let formData = new FormData();
+                    formData.append('id', id);
 
-                this.$modal.show('ver_interes');
+                    axios.post(url, formData, config)
+                        .then(data => {
+
+                            alert(data.data.message);
+                            this.getContacts();
+                           
+                    });
+                }
+            },
+            openModalNuevo: function() {
+                this.$modal.show('nuevo_contacto');
+            },
+            openModalEdit: function(id) {
+                for (let i = 0; i < this.contacts.length; i++) {
+                   if(this.contacts[i].id == id) {
+                        this.name = this.contacts[i].name;
+                        this.phone = this.contacts[i].phone;
+                        this.email = this.contacts[i].email;
+                        this.address = this.contacts[i].address;
+                        this.id = id;
+                   }  
+                }
+                this.$modal.show('edit_contact');
 
             },
             onChange: function(e){
                 this.interes_selected = e.target.value;
                 console.log('selected', this.interes_selected)
             },
-            saveInterest: function() {
-                const headers = { 
-                    "Authorization": `Bearer ${localStorage.token}`,
+            saveContact: function() {
+                const config = {
+                    headers: { Authorization: `Bearer ${localStorage.token}` }
                 };
+                const url = process.env.VUE_APP_URL+'/api/auth/save-contact';
 
-                const url_save = 'http://127.0.0.1:8000/api/auth/save-interests';
+                let formData = new FormData();
 
-                const interest = { interes: this.interes_selected };
-                axios.post(url_save, interest, { headers })
-                    .then(response => 
-                        console.log(response)
-                    );
+                formData.append('name', this.name);
+                formData.append('email', this.email);
+                formData.append('phone', this.phone);
+                formData.append('address', this.address);
 
-                    this.$modal.hide('nuevo_interes');
+                axios.post(url, formData, config)
+                    .then(data => {
+
+                        alert(data.data.message);
+                        this.getContacts();
+                        this.name = '';
+                        this.phone = '';
+                        this.email = '';
+                        this.address = '';
+                        this.$modal.hide('nuevo_contacto');
+                });
+            },
+             updateContact: function() {
+                const config = {
+                    headers: { Authorization: `Bearer ${localStorage.token}` }
+                };
+                const url = process.env.VUE_APP_URL+'/api/auth/update-contact';
+
+                let formData = new FormData();
+
+                formData.append('id', this.id);
+                formData.append('name', this.name);
+                formData.append('email', this.email);
+                formData.append('phone', this.phone);
+                formData.append('address', this.address);
+
+                axios.post(url, formData, config)
+                    .then(data => {
+
+                        alert(data.data.message);
+                        this.getContacts();
+                        this.id = '';
+                        this.name = '';
+                        this.phone = '';
+                        this.email = '';
+                        this.address = '';
+                        this.$modal.hide('edit_contact');
+                });
             },
         }   
     }
 
 </script>
-<style scoped>
+<style>
 
+.vm--modal {
+    height: 350px !important
+}
+
+.container {
+    margin-top: 50px;
+}
+
+#new_contact {
+    display: flex;
+}
 </style>
